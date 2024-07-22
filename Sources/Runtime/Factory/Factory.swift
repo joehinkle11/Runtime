@@ -43,7 +43,7 @@ public func createInstance(of type: Any.Type, constructor: ((PropertyInfo) throw
     case .struct:
         return try buildStruct(type: type, constructor: constructor)
     case .class:
-        return try buildClass(type: type)
+        return try buildClass(type: type, constructor: constructor)
     default:
         throw RuntimeError.unableToBuildType(type: type)
     }
@@ -57,7 +57,7 @@ func buildStruct(type: Any.Type, constructor: ((PropertyInfo) throws -> Any)? = 
     return getters(type: type).get(from: pointer)
 }
 
-func buildClass(type: Any.Type) throws -> Any {
+func buildClass(type: Any.Type, constructor: ((PropertyInfo) throws -> Any)? = nil) throws -> Any {
     var md = ClassMetadata(type: type)
     let info = md.toTypeInfo()
     let metadata = unsafeBitCast(type, to: UnsafeRawPointer.self)
@@ -73,7 +73,7 @@ func buildClass(type: Any.Type) throws -> Any {
             throw RuntimeError.unableToBuildType(type: type)
     }
 
-    try setProperties(typeInfo: info, pointer: UnsafeMutableRawPointer(mutating: value))
+    try setProperties(typeInfo: info, pointer: UnsafeMutableRawPointer(mutating: value), constructor: constructor)
 
     return unsafeBitCast(value, to: AnyObject.self)
 }
